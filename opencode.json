@@ -1,0 +1,13 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    "render": {
+      "type": "local",
+      "command": ["docker", "run", "-i", "--rm", "-e", "RENDER_API_KEY", "-v", "render-mcp-server-config:/config", "mcp/render"],
+      "enabled": true,
+      "env": {
+        "RENDER_API_KEY": "rnd_wgAkdonHP9Nh5gwmPj4a2vPpdQHr"
+      }
+    }
+  }
+}

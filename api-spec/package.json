@@ -1,0 +1,18 @@
+{
+  "name": "calbooking-api-spec",
+  "version": "0.0.2",
+  "private": true,
+  "description": "TypeSpec API contract for the cal.com-like booking service",
+  "type": "module",
+  "scripts": {
+    "build": "tsp compile .",
+    "watch": "tsp compile . --watch",
+    "clean": "tsp compile . --no-emit"
+  },
+  "dependencies": {
+    "@typespec/compiler": "^1.13.0",
+    "@typespec/http": "^1.13.0",
+    "@typespec/openapi": "^1.13.0",
+    "@typespec/openapi3": "^1.13.0"
+  }
+}

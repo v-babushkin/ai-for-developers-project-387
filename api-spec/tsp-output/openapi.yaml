@@ -1,0 +1,389 @@
+openapi: 3.0.0
+info:
+  title: CalBooking API
+  version: 0.1.0
+  description: |-
+    Booking service API (cal.com-like MVP).
+
+    Two implicit roles, no authentication:
+    - Owner: a single pre-seeded profile used by default in the admin area.
+    - Guest: books slots without an account or login.
+
+    Availability comes from a fixed weekly schedule (seeded, e.g. Mon-Fri 09:00-17:00).
+    Bookable slots are generated for the next 14 days starting from "now".
+    Slot step equals the event type duration.
+    Busy rule: at most one booking per time range globally for the owner,
+    even across different event types.
+tags:
+  - name: Guest
+  - name: Admin
+paths:
+  /api/admin/bookings:
+    get:
+      operationId: AdminBookings_list
+      description: |-
+        List upcoming bookings across all event types in a single list,
+        ordered by start time.
+      parameters: []
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Booking'
+      tags:
+        - Admin
+  /api/admin/event-types:
+    get:
+      operationId: AdminEventTypes_list
+      description: List all event types, including inactive ones.
+      parameters: []
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/EventType'
+      tags:
+        - Admin
+    post:
+      operationId: AdminEventTypes_create
+      description: Create a new event type.
+      parameters: []
+      responses:
+        '201':
+          description: The request has succeeded and a new resource has been created as a result.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventType'
+        '400':
+          description: The server could not understand the request due to invalid syntax.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      tags:
+        - Admin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EventTypeCreate'
+  /api/bookings:
+    post:
+      operationId: Bookings_create
+      description: |-
+        Create a booking on a chosen slot.
+        Fails with 409 if the time range overlaps any existing booking
+        (busy rule is global across all event types for the owner).
+      parameters: []
+      responses:
+        '201':
+          description: The request has succeeded and a new resource has been created as a result.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Booking'
+        '400':
+          description: The server could not understand the request due to invalid syntax.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: The server cannot find the requested resource.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: The request conflicts with the current state of the server.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      tags:
+        - Guest
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BookingCreate'
+  /api/bookings/{id}:
+    get:
+      operationId: Bookings_get
+      description: Get a booking by id.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Booking'
+        '404':
+          description: The server cannot find the requested resource.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      tags:
+        - Guest
+  /api/event-types:
+    get:
+      operationId: EventTypes_list
+      description: List all active event types available to guests.
+      parameters: []
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/EventType'
+      tags:
+        - Guest
+  /api/event-types/{id}:
+    get:
+      operationId: EventTypes_get
+      description: Get a single event type by id.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventType'
+        '404':
+          description: The server cannot find the requested resource.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      tags:
+        - Guest
+  /api/event-types/{id}/slots:
+    get:
+      operationId: EventTypes_slots
+      description: |-
+        List free, bookable slots for an event type over the next 14 days.
+        Slots are generated from the owner's weekly availability, stepped by the
+        event type duration, excluding any time that overlaps an existing booking.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Slot'
+        '404':
+          description: The server cannot find the requested resource.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      tags:
+        - Guest
+components:
+  schemas:
+    Booking:
+      type: object
+      required:
+        - id
+        - eventTypeId
+        - guestName
+        - guestEmail
+        - start
+        - end
+        - status
+        - createdAt
+      properties:
+        id:
+          type: integer
+          format: int64
+          readOnly: true
+        eventTypeId:
+          type: integer
+          format: int64
+          description: The event type this booking belongs to.
+        guestName:
+          type: string
+          minLength: 1
+          maxLength: 120
+          description: Guest display name.
+        guestEmail:
+          type: string
+          maxLength: 254
+          format: email
+          description: Guest email address.
+        start:
+          type: string
+          format: date-time
+          description: Inclusive start of the booking (ISO-8601, UTC).
+        end:
+          type: string
+          format: date-time
+          description: Exclusive end of the booking (ISO-8601, UTC).
+          readOnly: true
+        status:
+          allOf:
+            - $ref: '#/components/schemas/BookingStatus'
+          readOnly: true
+        createdAt:
+          type: string
+          format: date-time
+          readOnly: true
+      description: A confirmed reservation made by a guest.
+    BookingCreate:
+      type: object
+      required:
+        - eventTypeId
+        - guestName
+        - guestEmail
+        - start
+      properties:
+        eventTypeId:
+          type: integer
+          format: int64
+          description: The event type to book.
+        guestName:
+          type: string
+          minLength: 1
+          maxLength: 120
+        guestEmail:
+          type: string
+          maxLength: 254
+          format: email
+        start:
+          type: string
+          format: date-time
+          description: Start of the chosen slot (must match a free slot in the 14-day window).
+      description: Payload to create a booking on a chosen slot (guest).
+    BookingStatus:
+      type: string
+      enum:
+        - CONFIRMED
+        - CANCELLED
+      description: Booking lifecycle status.
+    Error:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: string
+          description: Machine-readable error code, e.g. "SLOT_TAKEN", "NOT_FOUND", "VALIDATION_ERROR".
+        message:
+          type: string
+          description: Human-readable description of the error.
+      description: Standard error payload returned for non-2xx responses.
+    EventType:
+      type: object
+      required:
+        - id
+        - title
+        - description
+        - durationMinutes
+        - active
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: Unique identifier of the event type.
+          readOnly: true
+        title:
+          type: string
+          minLength: 1
+          maxLength: 120
+          description: Display name shown to guests.
+        description:
+          type: string
+          maxLength: 2000
+          description: Description shown to guests.
+        durationMinutes:
+          type: integer
+          format: int32
+          minimum: 1
+          maximum: 1440
+          description: Meeting length in minutes. Also used as the slot step.
+        active:
+          type: boolean
+          description: Whether the event type is visible/bookable by guests.
+      description: A type of meeting the owner offers (e.g. "30 min intro call").
+    EventTypeCreate:
+      type: object
+      required:
+        - title
+        - description
+        - durationMinutes
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 120
+        description:
+          type: string
+          maxLength: 2000
+        durationMinutes:
+          type: integer
+          format: int32
+          minimum: 1
+          maximum: 1440
+        active:
+          type: boolean
+          description: Defaults to true when omitted.
+          default: true
+      description: Payload to create a new event type (owner/admin).
+    Slot:
+      type: object
+      required:
+        - start
+        - end
+      properties:
+        start:
+          type: string
+          format: date-time
+          description: Inclusive start of the slot (ISO-8601, UTC).
+        end:
+          type: string
+          format: date-time
+          description: Exclusive end of the slot (ISO-8601, UTC).
+      description: A free, bookable time range for a given event type.
+servers:
+  - url: http://localhost:8080
+    description: Local development server
+    variables: {}
