@@ -4,6 +4,7 @@ import com.calbooking.model.EventType;
 import com.calbooking.model.Slot;
 import com.calbooking.repository.BookingRepository;
 import java.time.DayOfWeek;
+import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.OffsetDateTime;
@@ -48,7 +49,9 @@ public class SlotService {
                     continue;
                 }
                 if (slotStart.isBefore(windowStart)) {
-                    slotStart = windowStart;
+                    long diffMinutes = Duration.between(slotStart, windowStart).toMinutes();
+                    long intervals = (diffMinutes + duration - 1) / duration;
+                    slotStart = slotStart.plusMinutes(intervals * duration);
                 }
                 slotEnd = slotStart.plusMinutes(duration);
                 if (slotEnd.isAfter(dayEnd)) {
