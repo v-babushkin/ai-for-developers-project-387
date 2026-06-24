@@ -2,7 +2,7 @@ name: Scheduled un Lighthouse
 
 on:
   schedule:
-    - cron: "/3 * * * *" #
+    - cron: "*/3 * * * *" #
   workflow_dispatch: # ручной запуск
 
 jobs:
