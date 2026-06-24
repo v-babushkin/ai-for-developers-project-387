@@ -1,8 +1,8 @@
-name: Scheduled OpenCode Task
+name: Scheduled un Lighthouse
 
 on:
   schedule:
-    - cron: "* * * * *" # каждую минуту
+    - cron: "/3 * * * *" #
   workflow_dispatch: # ручной запуск
 
 jobs:
@@ -10,13 +10,13 @@ jobs:
     name: Lighthouse
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v6
       - name: Use Node.js 24.x
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v6
         with:
           node-version: 24.x
       - name: run Lighthouse CI
         run: |
-          npm install -g @lhci/cli@0.15.x
-          cd .\frontend\
+          npm install --save-dev @lhci/cli@0.15.x
+          cd ./frontend/
           lhci autorun
