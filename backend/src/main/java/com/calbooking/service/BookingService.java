@@ -1,6 +1,7 @@
 package com.calbooking.service;
 
 import com.calbooking.dto.BookingCreateRequest;
+import com.calbooking.exception.ConflictException;
 import com.calbooking.exception.NotFoundException;
 import com.calbooking.exception.SlotTakenException;
 import com.calbooking.model.Booking;
@@ -50,5 +51,14 @@ public class BookingService {
 
     public java.util.List<Booking> listAll() {
         return bookingRepository.findAllOrderByStart();
+    }
+
+    public synchronized Booking cancelBooking(Long id) {
+        Booking b = getById(id);
+        if (b.getStatus() == BookingStatus.CANCELLED) {
+            throw new ConflictException("Booking is already cancelled: " + id);
+        }
+        b.setStatus(BookingStatus.CANCELLED);
+        return bookingRepository.save(b);
     }
 }

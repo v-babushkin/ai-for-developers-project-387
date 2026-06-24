@@ -117,6 +117,24 @@ export function useCreateEventType() {
   })
 }
 
+export function useCancelBooking() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (id: number) => {
+      const { data, error } = await api.POST('/api/bookings/{id}/cancel', {
+        params: { path: { id } },
+      })
+      if (error) throw error
+      return data
+    },
+    onSuccess: (data) => {
+      qc.invalidateQueries({ queryKey: ['bookings', data.id] })
+      qc.invalidateQueries({ queryKey: ['admin', 'bookings'] })
+      qc.invalidateQueries({ queryKey: ['event-types', data.eventTypeId, 'slots'] })
+    },
+  })
+}
+
 export function useAdminBookings() {
   return useQuery({
     queryKey: ['admin', 'bookings'],

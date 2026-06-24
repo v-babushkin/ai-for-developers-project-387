@@ -332,6 +332,55 @@ class CalBookingApplicationTests {
                 .andExpect(jsonPath("$", hasSize(1)));
     }
 
+    @Test
+    void cancelBookingSuccess() throws Exception {
+        createEventType("30 min", "", 30);
+        String start = OffsetDateTime.now(ZoneOffset.UTC).plusDays(1)
+                .withHour(10).withMinute(0).withSecond(0).withNano(0).toString();
+        String body = """
+                {"eventTypeId":1,"guestName":"John","guestEmail":"john@example.com","start":"%s"}
+                """.formatted(start);
+
+        mockMvc.perform(post("/api/bookings")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isCreated());
+
+        mockMvc.perform(post("/api/bookings/{id}/cancel", 1L))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(1))
+                .andExpect(jsonPath("$.status").value("CANCELLED"));
+    }
+
+    @Test
+    void cancelBookingNotFound() throws Exception {
+        mockMvc.perform(post("/api/bookings/{id}/cancel", 999))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.code").value("NOT_FOUND"));
+    }
+
+    @Test
+    void cancelAlreadyCancelledBooking() throws Exception {
+        createEventType("30 min", "", 30);
+        String start = OffsetDateTime.now(ZoneOffset.UTC).plusDays(1)
+                .withHour(10).withMinute(0).withSecond(0).withNano(0).toString();
+        String body = """
+                {"eventTypeId":1,"guestName":"John","guestEmail":"john@example.com","start":"%s"}
+                """.formatted(start);
+
+        mockMvc.perform(post("/api/bookings")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isCreated());
+
+        mockMvc.perform(post("/api/bookings/{id}/cancel", 1L))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(post("/api/bookings/{id}/cancel", 1L))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.code").value("ALREADY_CANCELLED"));
+    }
+
     private void createEventType(String title, String description, int durationMinutes) throws Exception {
         createEventType(title, description, durationMinutes, true);
     }
