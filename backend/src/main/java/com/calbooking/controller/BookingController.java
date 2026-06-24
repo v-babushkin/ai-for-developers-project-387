@@ -33,4 +33,9 @@ public class BookingController {
     public BookingResponse get(@PathVariable Long id) {
         return BookingResponse.from(bookingService.getById(id));
     }
+
+    @PostMapping("/{id}/cancel")
+    public BookingResponse cancel(@PathVariable Long id) {
+        return BookingResponse.from(bookingService.cancelBooking(id));
+    }
 }

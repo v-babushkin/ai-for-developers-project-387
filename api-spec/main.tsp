@@ -218,6 +218,23 @@ interface Bookings {
     @statusCode statusCode: 404;
     @body error: Error;
   };
+
+  /**
+   * Cancel a booking by id.
+   * Fails with 409 if the booking is already cancelled.
+   */
+  @post
+  @route("{id}/cancel")
+  cancel(@path id: int64):
+    | Booking
+    | {
+        @statusCode statusCode: 404;
+        @body error: Error;
+      }
+    | {
+        @statusCode statusCode: 409;
+        @body error: Error;
+      };
 }
 
 // ---------------------------------------------------------------------------

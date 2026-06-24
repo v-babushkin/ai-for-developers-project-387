@@ -144,6 +144,40 @@ paths:
                 $ref: '#/components/schemas/Error'
       tags:
         - Guest
+  /api/bookings/{id}/cancel:
+    post:
+      operationId: Bookings_cancel
+      description: |-
+        Cancel a booking by id.
+        Fails with 409 if the booking is already cancelled.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Booking'
+        '404':
+          description: The server cannot find the requested resource.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: The request conflicts with the current state of the server.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      tags:
+        - Guest
   /api/event-types:
     get:
       operationId: EventTypes_list

@@ -1,6 +1,8 @@
 import { useMemo } from 'react'
-import { useAdminBookings, apiErrorMessage } from '@/api/hooks'
+import { toast } from 'sonner'
+import { useAdminBookings, useCancelBooking, apiErrorMessage } from '@/api/hooks'
 import { formatDateTime } from '@/lib/datetime'
+import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -15,11 +17,20 @@ import {
 
 export function AdminBookingsPage() {
   const { data, isLoading, isError, error } = useAdminBookings()
+  const cancelBooking = useCancelBooking()
 
   const sorted = useMemo(
     () => [...(data ?? [])].sort((a, b) => +new Date(a.start) - +new Date(b.start)),
     [data],
   )
+
+  const handleCancel = (id: number) => {
+    if (!window.confirm('Вы уверены, что хотите отменить эту встречу?')) return
+    cancelBooking.mutate(id, {
+      onSuccess: () => toast.success('Встреча отменена'),
+      onError: (err) => toast.error(apiErrorMessage(err, 'Не удалось отменить встречу')),
+    })
+  }
 
   return (
     <section>
@@ -44,6 +55,7 @@ export function AdminBookingsPage() {
                   <TableHead>Гость</TableHead>
                   <TableHead>Email</TableHead>
                   <TableHead>Статус</TableHead>
+                  <TableHead>Действия</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -57,6 +69,18 @@ export function AdminBookingsPage() {
                       <Badge variant={b.status === 'CONFIRMED' ? 'default' : 'secondary'}>
                         {b.status}
                       </Badge>
+                    </TableCell>
+                    <TableCell>
+                      {b.status === 'CONFIRMED' && (
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => handleCancel(b.id)}
+                          disabled={cancelBooking.isPending}
+                        >
+                          Отменить
+                        </Button>
+                      )}
                     </TableCell>
                   </TableRow>
                 ))}
