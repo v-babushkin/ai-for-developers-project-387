@@ -10,11 +10,11 @@ jobs:
     name: Lighthouse
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 20
       - name: Use Node.js 24.x
-        uses: actions/setup-node@v7
+        uses: actions/setup-node@v6
         with:
           node-version: 24.x
       - name: npm install, build
@@ -40,7 +40,7 @@ jobs:
           fi
       - name: Save Lighthouse reports
         if: always()
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v6
         with:
           name: lighthouse-reports-${{ github.run_id }}
           path: frontend/.lighthouseci/
