@@ -51,4 +51,5 @@ jobs:
         with:
           name: lighthouse-reports-${{ github.run_id }}
           path: frontend/.lighthouseci/
+          include-hidden-files: true
           overwrite: true
