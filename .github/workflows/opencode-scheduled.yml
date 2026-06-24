@@ -1,4 +1,4 @@
-name: Scheduled un Lighthouse
+name: Scheduled Run Lighthouse
 
 on:
   schedule:
@@ -9,6 +9,9 @@ jobs:
   lhci:
     name: Lighthouse
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
     steps:
       - uses: actions/checkout@v6
       - name: Use Node.js 24.x
@@ -22,5 +25,4 @@ jobs:
       - name: run Lighthouse CI
         run: |
           npm install --save-dev @lhci/cli@0.15.x
-          cd ./frontend/
           lhci autorun
