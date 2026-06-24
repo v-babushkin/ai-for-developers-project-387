@@ -3,15 +3,12 @@ name: Scheduled Run Lighthouse
 on:
   schedule:
     - cron: "*/5 * * * *"
-  workflow_dispatch: # ручной запуск
+  workflow_dispatch:
 
 jobs:
   lhci:
     name: Lighthouse
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: frontend
     steps:
       - uses: actions/checkout@v6
         with:
@@ -21,15 +18,30 @@ jobs:
         with:
           node-version: 24.x
       - name: npm install, build
+        working-directory: frontend
         run: |
           npm install
           npm run build
       - name: run Lighthouse CI
+        working-directory: frontend
         run: |
           npm install @lhci/cli@0.15.x
           npx lhci autorun
-      - uses: actions/upload-artifact@v4
+      - name: Debug – check .lighthouseci
         if: always()
+        working-directory: frontend
+        run: |
+          if [ -d .lighthouseci ]; then
+            echo "found .lighthouseci/"
+            ls -la .lighthouseci/
+          else
+            echo "NO .lighthouseci/ directory"
+            ls -la
+          fi
+      - name: Save Lighthouse reports
+        if: always()
+        uses: actions/upload-artifact@v4
         with:
           name: lighthouse-reports-${{ github.run_id }}
           path: frontend/.lighthouseci/
+          overwrite: true
