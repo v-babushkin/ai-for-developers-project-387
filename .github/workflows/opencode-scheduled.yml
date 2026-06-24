@@ -50,5 +50,5 @@ jobs:
         uses: actions/upload-artifact@v6
         with:
           name: lighthouse-reports-${{ github.run_id }}
-          path: .lighthouseci/
+          path: frontend/.lighthouseci/
           overwrite: true
