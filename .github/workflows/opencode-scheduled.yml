@@ -27,6 +27,13 @@ jobs:
         run: |
           npm install @lhci/cli@0.15.x
           npx lhci autorun
+      - name: Ensure .lighthouseci is in frontend
+        if: always()
+        run: |
+          if [ -d .lighthouseci ] && [ ! -d frontend/.lighthouseci ]; then
+            echo "Moving .lighthouseci from root to frontend/"
+            mv .lighthouseci frontend/.lighthouseci
+          fi
       - name: Debug – check .lighthouseci
         if: always()
         working-directory: frontend
